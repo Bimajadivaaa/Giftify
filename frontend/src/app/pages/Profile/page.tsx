@@ -1,18 +1,20 @@
 import Navbar from "@/app/components/Navbar";
+import Link from "next/link";
 import React from "react";
 
 const Profile: React.FC = () => {
   const donationHistory = [
-    { address: "0x123...abc1", totalDonation: "5.00 sUSDe", yield: "2%" },
-    { address: "0x456...def2", totalDonation: "10.00 sUSDe", yield: "3.5%" },
-    { address: "0x789...ghi3", totalDonation: "7.50 sUSDe", yield: "4%" },
+    { address: "0x123...abc1", totalDonation: "5.00 sUSDe", yield: "5%" },
+    { address: "0x456...def2", totalDonation: "10.00 sUSDe", yield: "5%" },
+    { address: "0x789...ghi3", totalDonation: "7.50 sUSDe", yield: "5%" },
   ];
 
   return (
     <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen px-8 py-12">
-        <Navbar />
+      <Navbar />
+
       {/* Profile Header */}
-      <div className="max-w-4xl mx-auto text-center mb-12">
+      <div className="max-w-4xl mx-auto text-center mb-12 mt-20">
         <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-green-400 to-teal-400">
           Profile
         </h1>
@@ -24,13 +26,17 @@ const Profile: React.FC = () => {
       {/* Profile Information */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
-          <h2 className="text-lg font-bold text-gray-300 mb-2">Total Donations</h2>
+          <h2 className="text-lg font-bold text-gray-300 mb-2">
+            Total Donations
+          </h2>
           <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
             100.00 sUSDe
           </p>
         </div>
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
-          <h2 className="text-lg font-bold text-gray-300 mb-2">Collected Donations</h2>
+          <h2 className="text-lg font-bold text-gray-300 mb-2">
+            Collected Donations
+          </h2>
           <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
             150.00 sUSDe
           </p>
@@ -38,14 +44,23 @@ const Profile: React.FC = () => {
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
           <h2 className="text-lg font-bold text-gray-300 mb-2">Yield Earned</h2>
           <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-green-400">
-            12%
+            15%
           </p>
+          <div className="text-center mt-12">
+            <Link href="/pages/ClaimYield">
+              <p className=" px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 hover:from-blue-500 hover:to-teal-400 text-white font-medium transition-all shadow-lg hover:shadow-xl">
+                Claim Your Yield
+              </p>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Donation History */}
       <div className="max-w-6xl mx-auto bg-gray-800 bg-opacity-50 rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-gray-300 mb-6">Donation History</h2>
+        <h2 className="text-2xl font-bold text-gray-300 mb-6">
+          Donation History
+        </h2>
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
@@ -57,8 +72,13 @@ const Profile: React.FC = () => {
             </thead>
             <tbody>
               {donationHistory.map((donation, index) => (
-                <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
-                  <td className="px-4 py-2 text-blue-400">{donation.address}</td>
+                <tr
+                  key={index}
+                  className="border-b border-gray-700 hover:bg-gray-700"
+                >
+                  <td className="px-4 py-2 text-blue-400">
+                    {donation.address}
+                  </td>
                   <td className="px-4 py-2">{donation.totalDonation}</td>
                   <td className="px-4 py-2">{donation.yield}</td>
                 </tr>

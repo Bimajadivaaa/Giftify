@@ -4,9 +4,9 @@ import React, { useState } from "react";
 
 const creators = [
   { name: "Sadbor", yield: "5%", walletAddress: "0x123...abc1" },
-  { name: "Windah Basudara", yield: "3.5%", walletAddress: "0x456...def2" },
-  { name: "Jonathan Liandi", yield: "7.2%", walletAddress: "0x789...ghi3" },
-  { name: "Lionel Messi", yield: "4.1%", walletAddress: "0xabc...jkl4" },
+  { name: "Windah Basudara", yield: "5%", walletAddress: "0x456...def2" },
+  { name: "Jonathan Liandi", yield: "5%", walletAddress: "0x789...ghi3" },
+  { name: "Lionel Messi", yield: "5%", walletAddress: "0xabc...jkl4" },
 ];
 
 const Donation: React.FC = () => {
@@ -20,7 +20,7 @@ const Donation: React.FC = () => {
   return (
     <main className="bg-black text-white min-h-screen p-8">
       <Navbar />
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto mt-20">
         <h1 className="text-4xl font-bold mb-8 text-center">Find your Content Creator</h1>
 
         {/* Search Bar */}
