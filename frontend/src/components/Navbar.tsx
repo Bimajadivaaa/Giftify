@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const Navbar: React.FC = () => {
   return (
@@ -11,27 +12,25 @@ const Navbar: React.FC = () => {
 
         <div className="flex items-center space-x-8">
           <Link
-            href="/pages/Donation"
+            href="/Donate"
             className="text-sm font-semibold flex items-center space-x-2 hover:text-gray-300 transition-colors"
           >
             <span>Donation</span>
           </Link>
           <Link
-            href="/pages/ClaimYield"
+            href="/ClaimYield"
             className="text-sm font-semibold flex items-center space-x-2 hover:text-gray-300 transition-colors"
           >
             <span>Claim Yield</span>
           </Link>
           <Link
-            href="/pages/Profile"
+            href="/Profile"
             className="text-sm font-semibold flex items-center space-x-2 hover:text-gray-300 transition-colors"
           >
             <span>Profile</span>
           </Link>
 
-          <button className="flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 text-sm font-semibold text-white hover:from-blue-500 hover:to-teal-400 transition-all shadow-md hover:shadow-lg">
-            Connect Wallet
-          </button>
+          <ConnectButton />
         </div>
       </div>
     </nav>

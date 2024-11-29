@@ -1,6 +1,8 @@
 "use client";
-import Navbar from "@/app/components/Navbar";
+import Navbar from "../components/Navbar";
 import React, { useState } from "react";
+import Image from "next/image";
+import sUSDeLogo from "../public/Images/usde.svg"; // Pastikan path ini benar
 
 const ClaimYieldPage: React.FC = () => {
   const [walletAddress, setWalletAddress] = useState("");
@@ -28,7 +30,6 @@ const ClaimYieldPage: React.FC = () => {
           <label
             htmlFor="walletAddress"
             className="block text-gray-300 mb-2 font-medium"
-            
           >
             Wallet Address
           </label>
@@ -46,9 +47,12 @@ const ClaimYieldPage: React.FC = () => {
         {/* Yield Info */}
         <div className="bg-gray-900 rounded-lg p-4 text-center mb-6">
           <h2 className="text-lg font-bold text-gray-300 mb-2">Your Yield</h2>
-          <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
-            0 sUSDe
-          </p>
+          <div className="flex items-center justify-center space-x-2">
+            <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
+            <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
+              0 sUSDe
+            </p>
+          </div>
         </div>
 
         {/* Claim Button */}

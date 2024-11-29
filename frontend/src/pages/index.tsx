@@ -1,10 +1,11 @@
 import React from "react";
 import Image from "next/image";
-import donateImage from "../../../../public/Images/donate.png";
-import Navbar from "@/app/components/Navbar";
+import donateImage from "../Public/Images/donate.png";
+import Navbar from "../components/Navbar";
 import Link from "next/link";
 
 const GiftifyPage: React.FC = () => {
+
   return (
     <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen pt-8">
       <Navbar />
@@ -22,7 +23,7 @@ const GiftifyPage: React.FC = () => {
             offering cashback incentives.
           </p>
           <button className="mt-8 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all shadow-lg hover:shadow-2xl">
-            <Link href="/pages/Donation">Explore Donation</Link>
+            <Link href="/Donate">Explore Donation</Link>
           </button>
         </div>
 
@@ -40,6 +41,24 @@ const GiftifyPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* <button
+        className="ml-[200px] mt-8 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all shadow-lg hover:shadow-2xl"
+        onClick={handleApproval}
+      >
+        {isApprovalPending ? "Approving..." : "Approve"}
+        {isLoading ? " Loading..." : ""}
+        {isError ? "Error" : ""}
+      </button> */}
+
+      {/* <button
+        className="ml-[50px] mt-8 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all shadow-lg hover:shadow-2xl"
+        onClick={handleDeposit}
+      >
+        {isDepositPending ? "Deposit..." : "Deposit"}
+        {isError ? " Loading..." : ""}
+        {isLoading ? "Error" : ""}
+      </button> */}
 
       <footer className="bg-black text-gray-400 text-center p-10">
         <p>© 2024 Giftify. All rights reserved.</p>

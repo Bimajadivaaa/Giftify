@@ -1,12 +1,15 @@
-import Navbar from "@/app/components/Navbar";
+'use client';
+import Navbar from "../components/Navbar";
 import Link from "next/link";
 import React from "react";
+import Image from "next/image";
+import sUSDeLogo from "../public/Images/usde.svg"; // Pastikan path dan nama file benar
 
 const Profile: React.FC = () => {
   const donationHistory = [
-    { address: "0x123...abc1", totalDonation: "5.00 sUSDe", yield: "5%" },
-    { address: "0x456...def2", totalDonation: "10.00 sUSDe", yield: "5%" },
-    { address: "0x789...ghi3", totalDonation: "7.50 sUSDe", yield: "5%" },
+    { address: "0x123...abc1", totalDonation: "5.00", yield: "5%" },
+    { address: "0x456...def2", totalDonation: "10.00", yield: "5%" },
+    { address: "0x789...ghi3", totalDonation: "7.50", yield: "5%" },
   ];
 
   return (
@@ -29,16 +32,22 @@ const Profile: React.FC = () => {
           <h2 className="text-lg font-bold text-gray-300 mb-2">
             Total Donations
           </h2>
-          <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
-            100.00 sUSDe
+          <p className="text-2xl font-extrabold flex items-center space-x-2">
+            <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
+              150 sUSDe
+            </span>
           </p>
         </div>
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
           <h2 className="text-lg font-bold text-gray-300 mb-2">
             Collected Donations
           </h2>
-          <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
-            150.00 sUSDe
+          <p className="text-2xl font-extrabold flex items-center space-x-2">
+            <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-400">
+              150.00 sUSDe
+            </span>
           </p>
         </div>
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
@@ -79,7 +88,10 @@ const Profile: React.FC = () => {
                   <td className="px-4 py-2 text-blue-400">
                     {donation.address}
                   </td>
-                  <td className="px-4 py-2">{donation.totalDonation}</td>
+                  <td className="px-4 py-2 flex items-center space-x-2">
+                    <Image src={sUSDeLogo} alt="sUSDe" width={16} height={16} />
+                    <span>{donation.totalDonation} sUSDe</span>
+                  </td>
                   <td className="px-4 py-2">{donation.yield}</td>
                 </tr>
               ))}
