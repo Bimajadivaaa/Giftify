@@ -1,29 +1,130 @@
 'use client';
-import Navbar from "../components/Navbar";  
+
+import Navbar from "../components/Navbar";
 import React, { useState } from "react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { GiftifyABI } from "../utils/abi/Giftify";
+import { USDE } from "../utils/abi/USDE";
+import { ethers } from 'ethers';
 
 const creators = [
-  { name: "Sadbor", yield: "5%", walletAddress: "0x123...abc1" },
-  { name: "Windah Basudara", yield: "5%", walletAddress: "0x456...def2" },
-  { name: "Jonathan Liandi", yield: "5%", walletAddress: "0x789...ghi3" },
-  { name: "Lionel Messi", yield: "5%", walletAddress: "0xabc...jkl4" },
+  {
+    name: "Alex",
+    yield: "5%",
+    walletAddress: "0xFFA3EceD063276266924700C726f4BD94A18c0E8",
+  },
+  {
+    name: "John Doe",
+    yield: "5%",
+    walletAddress: "0xeC79671059c31901DB1E2411E57AdedaBC1F7806",
+  },
+  {
+    name: "Michael",
+    yield: "5%",
+    walletAddress: "0x568eccd69EE795b83395Aa3825879439B21bd955",
+  },
+  {
+    name: "Mr. Beast",
+    yield: "5%",
+    walletAddress: "0xB7A19852cdb7B5dDF83348DEBE8B398fd48F5032",
+  },
 ];
 
 const Donation: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCreator, setSelectedCreator] = useState<{
+    name: string;
+    yield: string;
+    walletAddress: string;
+  } | null>(null);
+  const [donationAmount, setDonationAmount] = useState<number | string>("");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-  // Filter creators based on search term
+  // Approve Contract Interaction
+  const {
+    data: approvalHash,
+    isPending: isApprovalPending,
+    writeContract: approveUSDE,
+  } = useWriteContract();
+
+  const { isSuccess: isApprovalSuccess, isError: isApprovalError } =
+    useWaitForTransactionReceipt({
+      hash: approvalHash,
+    });
+
+  const handleApproval = async () => {
+    try {
+      if (!donationAmount || Number(donationAmount) <= 0) {
+        console.error("Invalid approval amount");
+        return;
+      }
+
+      const weiAmount = ethers.parseEther(donationAmount.toString()); // Convert to wei
+      console.log("Approving amount in Wei:", weiAmount.toString());
+
+      await approveUSDE({
+        abi: USDE,
+        address: "0x7D6AF0F5F5A00685dB264ee5506eDEbf1CcaeBac", // USDE contract
+        functionName: "approve",
+        args: ["0xD73d920f21b14F130Dd62C56bb537BA3d85b59Cc", weiAmount],
+      });
+
+    } catch (error) {
+      console.error("Approval Error:", error);
+    }
+  };
+
+  // Donate Contract Interaction
+  const {
+    data: donateHash,
+    isPending: isDonationPending,
+    writeContract: donate,
+  } = useWriteContract();
+
+  const { isSuccess: isDonationSuccess, isError: isDonationError } =
+    useWaitForTransactionReceipt({
+      hash: donateHash,
+    });
+
+  const handleDonate = async () => {
+    try {
+      if (!donationAmount || Number(donationAmount) <= 0) {
+        console.error("Invalid donation amount");
+        return;
+      }
+
+      if (selectedCreator) {
+        console.log("Selected Creator:", selectedCreator);
+        const weiAmount = ethers.parseEther(donationAmount.toString());
+
+        await donate({
+          abi: GiftifyABI,
+          address: "0xD73d920f21b14F130Dd62C56bb537BA3d85b59Cc", // Giftify contract
+          functionName: "donate",
+          args: [weiAmount, selectedCreator.walletAddress],
+        });
+
+        setIsPopupOpen(false); // Close the popup after donation
+      } else {
+        console.error("Approval not completed or no creator selected");
+      }
+    } catch (error) {
+      console.error("Donation Error:", error);
+    }
+  };
+
   const filteredCreators = creators.filter((creator) =>
     creator.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <main className="bg-black text-white min-h-screen p-8">
+    <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen p-8">
       <Navbar />
       <div className="max-w-4xl mx-auto mt-20">
-        <h1 className="text-4xl font-bold mb-8 text-center">Find your Content Creator</h1>
+        <h1 className="text-4xl font-bold mb-8 text-center">
+          Find your Content Creator
+        </h1>
 
-        {/* Search Bar */}
         <div className="mb-8 flex justify-center">
           <input
             type="text"
@@ -34,7 +135,6 @@ const Donation: React.FC = () => {
           />
         </div>
 
-        {/* Creator Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredCreators.map((creator, index) => (
             <div
@@ -43,23 +143,72 @@ const Donation: React.FC = () => {
             >
               <h2 className="text-2xl font-bold mb-2">{creator.name}</h2>
               <p className="text-gray-400 text-sm mb-4">
-                Wallet: <span className="text-blue-400">{creator.walletAddress}</span>
+                Wallet:{" "}
+                <span className="text-blue-400">{creator.walletAddress}</span>
               </p>
-              <p className="text-gray-300 mb-6">Yield: {creator.yield} / Donation</p>
-              <button className="border border-gray-400 text-white py-2 px-4 rounded-lg transition-colors hover:border-blue-500 hover:text-blue-500">
+              <p className="text-gray-300 mb-6">
+                Yield: {creator.yield} / Donation
+              </p>
+              <button
+                className="border border-gray-400 text-white py-2 px-4 rounded-lg transition-colors hover:border-blue-500 hover:text-blue-500"
+                onClick={() => {
+                  setSelectedCreator(creator);
+                  setIsPopupOpen(true);
+                }}
+              >
                 Donate
               </button>
             </div>
           ))}
         </div>
 
-        {/* No results message */}
         {filteredCreators.length === 0 && (
           <p className="text-center text-gray-400 mt-6">
             No creators found. Try searching for a different name.
           </p>
         )}
       </div>
+
+      {isPopupOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            {selectedCreator && (
+              <h2 className="text-xl font-bold mb-4">
+                Donate to {selectedCreator.name}
+              </h2>
+            )}
+            <input
+              type="number"
+              placeholder="Enter donation amount"
+              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg mb-4"
+              value={donationAmount}
+              onChange={(e) => setDonationAmount(Number(e.target.value))}
+            />
+            <div className="flex justify-end space-x-4">
+              <button
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all"
+                onClick={handleApproval}
+                disabled={isApprovalPending}
+              >
+                {isApprovalPending ? "Approving..." : "Approve"}
+              </button>
+              <button
+                className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all"
+                onClick={handleDonate}
+                disabled={isDonationPending || !isApprovalSuccess}
+              >
+                {isDonationPending ? "Donating..." : "Donate"}
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium"
+                onClick={() => setIsPopupOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
