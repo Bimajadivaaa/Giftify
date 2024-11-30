@@ -1,11 +1,31 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import sUSDeLogo from "../public/Images/usde.svg"; // Pastikan path dan nama file benar
+import { useAccount } from "wagmi";
+import { useReadContract } from "wagmi";
+import { GiftifyABI } from "../utils/abi/Giftify";
+import sUSDeLogo from "../public/Images/usde.svg";
+import { ethers } from "ethers";
 
 const Profile: React.FC = () => {
+  const { address } = useAccount(); 
+  const [donatedAmount, setDonatedAmount] = useState<string>("0");
+  console.log("Address: ", address); 
+
+  const { data: gifterData, isLoading } = useReadContract({
+    abi: GiftifyABI,
+    address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5", 
+    functionName: "gifters",
+    args: [address] 
+  });
+
+  console.log("Gifter Data: ", gifterData);
+
+
   const donationHistory = [
     { address: "0x123...abc1", totalDonation: "5.00", yield: "5%" },
     { address: "0x456...def2", totalDonation: "10.00", yield: "5%" },
@@ -36,17 +56,16 @@ const Profile: React.FC = () => {
           <p className="text-2xl font-extrabold flex items-center space-x-2">
             <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
-              0 sUSDe
+              {isLoading ? "Loading..." : `${donatedAmount} sUSDe`}
             </span>
           </p>
           <div className="text-center mt-12">
-          <p className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 hover:from-blue-500 hover:to-teal-400 text-white font-medium transition-all shadow-lg hover:shadow-xl">
-            Claim Your Donation
-          </p>
+            <p className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 hover:from-blue-500 hover:to-teal-400 text-white font-medium transition-all shadow-lg hover:shadow-xl">
+              Claim Your Donation
+            </p>
           </div>
-     
         </div>
-        
+
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
           <h2 className="text-lg font-bold text-gray-300 mb-2">Yield Earned</h2>
           <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-green-400">
