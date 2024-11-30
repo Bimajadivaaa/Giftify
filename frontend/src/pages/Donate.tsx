@@ -1,11 +1,13 @@
 'use client';
 
 import Navbar from "../components/Navbar";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { GiftifyABI } from "../utils/abi/Giftify";
 import { USDE } from "../utils/abi/USDE";
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const creators = [
   {
@@ -46,7 +48,6 @@ const Donation: React.FC = () => {
     isPending: isApprovalPending,
     writeContract: approveUSDE,
   } = useWriteContract();
-  
 
   const { isSuccess: isApprovalSuccess, isError: isApprovalError } =
     useWaitForTransactionReceipt({
@@ -56,25 +57,24 @@ const Donation: React.FC = () => {
   const handleApproval = async () => {
     try {
       if (!donationAmount || Number(donationAmount) <= 0) {
-        console.error("Invalid approval amount");
+        toast.error("Invalid approval amount!");
         return;
       }
 
-      const weiAmount = ethers.parseEther(donationAmount.toString()); // Convert to wei
-      console.log("Approving amount in Wei:", weiAmount.toString());
-
+      const weiAmount = ethers.parseEther(donationAmount.toString());
       await approveUSDE({
         abi: USDE,
         address: "0x7D6AF0F5F5A00685dB264ee5506eDEbf1CcaeBac", // USDE contract
         functionName: "approve",
-        args: ["0xD73d920f21b14F130Dd62C56bb537BA3d85b59Cc", weiAmount],
+        args: ["0x5b5e57e208074Bb5397F26067C147276bD5b82D5", weiAmount],
       });
-
     } catch (error) {
+      toast.error("Approval failed!");
       console.error("Approval Error:", error);
     }
   };
 
+  // Donate Contract Interaction
   const {
     data: donateHash,
     isPending: isDonationPending,
@@ -86,43 +86,40 @@ const Donation: React.FC = () => {
       hash: donateHash,
     });
 
-    const handleDonate = async () => {
-      try {
-        console.log("Donate button clicked!");
-    
-        if (!donationAmount || Number(donationAmount) <= 0) {
-          console.error("Invalid donation amount:", donationAmount);
-          return;
-        }
-    
-        if (!selectedCreator) {
-          console.error("No creator selected for donation!");
-          return;
-        }
-    
-        const weiAmount = ethers.parseEther(donationAmount.toString());
-        console.log("Converted donation amount to Wei:", weiAmount.toString());
-        console.log("Selected creator address:", selectedCreator.walletAddress);
-    
-        if (!donate) {
-          console.error("Donate function is not defined. Check the useWriteContract hook.");
-          return;
-        }
-    
-        await donate({
-          abi: GiftifyABI,
-          address: "0xD73d920f21b14F130Dd62C56bb537BA3d85b59Cc", // Giftify contract
-          functionName: "donate",
-          value: weiAmount,
-          args: ["0x946761086BE06a5Ba55295411b69D5ef1AAbf808"],
-        });
-    
-        setIsPopupOpen(false); // Close the popup
-      } catch (error) {
-        console.error("Donation Error:", error);
+  useEffect(() => {
+    if (isDonationSuccess) {
+      toast.success("Donation succeeded!");
+    }
+
+    if (isDonationError) {
+      toast.error("Donation failed!");
+    }
+  }, [isDonationSuccess, isDonationError]);
+
+  const handleDonate = async () => {
+    try {
+      if (!donationAmount || Number(donationAmount) <= 0) {
+        toast.error("Invalid donation amount!");
+        return;
       }
-    };
-    
+
+      if (!selectedCreator) {
+        toast.error("No creator selected!");
+        return;
+      }
+
+      const weiAmount = ethers.parseEther(donationAmount.toString());
+      await donate({
+        abi: GiftifyABI,
+        address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5", // Giftify contract
+        functionName: "donate",
+        args: [weiAmount, selectedCreator.walletAddress],
+      });
+    } catch (error) {
+      toast.error("Donation failed!");
+      console.error("Donation Error:", error);
+    }
+  };
 
   const filteredCreators = creators.filter((creator) =>
     creator.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -130,10 +127,11 @@ const Donation: React.FC = () => {
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  }
+  };
 
   return (
     <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen p-8">
+      <ToastContainer position="top-right" autoClose={5000} />
       <Navbar />
       <div className="max-w-4xl mx-auto mt-20">
         <h1 className="text-4xl font-bold mb-8 text-center">
@@ -189,7 +187,7 @@ const Donation: React.FC = () => {
           <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
             {selectedCreator && (
               <h2 className="text-md font-bold mb-4">
-                Donate to {selectedCreator.name} 
+                Donate to {selectedCreator.name}
                 <h2>Address : {formatAddress(selectedCreator.walletAddress)}</h2>
               </h2>
             )}
@@ -211,7 +209,7 @@ const Donation: React.FC = () => {
               <button
                 className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-teal-500 hover:to-green-500 text-white font-medium transition-all"
                 onClick={handleDonate}
-                disabled={isDonationPending || !isApprovalSuccess}
+                disabled={isDonationPending}
               >
                 {isDonationPending ? "Donating..." : "Donate"}
               </button>
