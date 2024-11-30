@@ -46,6 +46,7 @@ const Donation: React.FC = () => {
     isPending: isApprovalPending,
     writeContract: approveUSDE,
   } = useWriteContract();
+  
 
   const { isSuccess: isApprovalSuccess, isError: isApprovalError } =
     useWaitForTransactionReceipt({
@@ -74,7 +75,6 @@ const Donation: React.FC = () => {
     }
   };
 
-  // Donate Contract Interaction
   const {
     data: donateHash,
     isPending: isDonationPending,
@@ -86,36 +86,51 @@ const Donation: React.FC = () => {
       hash: donateHash,
     });
 
-  const handleDonate = async () => {
-    try {
-      if (!donationAmount || Number(donationAmount) <= 0) {
-        console.error("Invalid donation amount");
-        return;
-      }
-
-      if (selectedCreator) {
-        console.log("Selected Creator:", selectedCreator);
+    const handleDonate = async () => {
+      try {
+        console.log("Donate button clicked!");
+    
+        if (!donationAmount || Number(donationAmount) <= 0) {
+          console.error("Invalid donation amount:", donationAmount);
+          return;
+        }
+    
+        if (!selectedCreator) {
+          console.error("No creator selected for donation!");
+          return;
+        }
+    
         const weiAmount = ethers.parseEther(donationAmount.toString());
-
+        console.log("Converted donation amount to Wei:", weiAmount.toString());
+        console.log("Selected creator address:", selectedCreator.walletAddress);
+    
+        if (!donate) {
+          console.error("Donate function is not defined. Check the useWriteContract hook.");
+          return;
+        }
+    
         await donate({
           abi: GiftifyABI,
           address: "0xD73d920f21b14F130Dd62C56bb537BA3d85b59Cc", // Giftify contract
           functionName: "donate",
-          args: [weiAmount, selectedCreator.walletAddress],
+          value: weiAmount,
+          args: ["0x946761086BE06a5Ba55295411b69D5ef1AAbf808"],
         });
-
-        setIsPopupOpen(false); // Close the popup after donation
-      } else {
-        console.error("Approval not completed or no creator selected");
+    
+        setIsPopupOpen(false); // Close the popup
+      } catch (error) {
+        console.error("Donation Error:", error);
       }
-    } catch (error) {
-      console.error("Donation Error:", error);
-    }
-  };
+    };
+    
 
   const filteredCreators = creators.filter((creator) =>
     creator.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  }
 
   return (
     <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen p-8">
@@ -144,7 +159,7 @@ const Donation: React.FC = () => {
               <h2 className="text-2xl font-bold mb-2">{creator.name}</h2>
               <p className="text-gray-400 text-sm mb-4">
                 Wallet:{" "}
-                <span className="text-blue-400">{creator.walletAddress}</span>
+                <span className="text-blue-400">{formatAddress(creator.walletAddress)}</span>
               </p>
               <p className="text-gray-300 mb-6">
                 Yield: {creator.yield} / Donation
@@ -173,8 +188,9 @@ const Donation: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
             {selectedCreator && (
-              <h2 className="text-xl font-bold mb-4">
-                Donate to {selectedCreator.name}
+              <h2 className="text-md font-bold mb-4">
+                Donate to {selectedCreator.name} 
+                <h2>Address : {formatAddress(selectedCreator.walletAddress)}</h2>
               </h2>
             )}
             <input
