@@ -20,9 +20,13 @@ const Profile: React.FC = () => {
   const [donatedAmount, setDonatedAmount] = useState<string>("0");
   const [donateUnclaimed, setDonateUnclaimed] = useState<string>("0");
   const [yieldEarned, setYieldEarned] = useState<string>("0");
-  const [claimableShares, setClaimableShares] = useState<string>("0");
+  const [claimableSharesFormatted, setClaimableSharesFormatted] =
+    useState<string>("0");
+  const [claimableSharesRaw, setClaimableSharesRaw] = useState<bigint>(
+    BigInt(0)
+  );
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-
+  const [totalShares, settotalShares] = useState<string>("0");
 
   const { data: gifterData, isLoading: isGifterDataLoading } = useReadContract({
     abi: GiftifyABI,
@@ -31,7 +35,6 @@ const Profile: React.FC = () => {
     args: [address],
   });
 
-  console.log("Gifter Data:", gifterData);
   const { data: yieldData, isLoading: isYieldLoading } = useReadContract({
     abi: GiftifyABI,
     address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
@@ -45,6 +48,10 @@ const Profile: React.FC = () => {
     functionName: "creators",
     args: [address],
   });
+
+  console.log("Creators Data:", creatorsData);
+  console.log("Gifter Data:", gifterData);
+  console.log("Yield Data:", yieldData);
 
   const {
     data: withdrawHash,
@@ -61,36 +68,54 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (gifterData && Array.isArray(gifterData) && gifterData.length > 1) {
       const rawDonatedAmount = gifterData[1];
-      console.log("Donated Amount:", rawDonatedAmount.toString());
       const formattedAmount = ethers.formatEther(rawDonatedAmount.toString());
       setDonatedAmount(formattedAmount);
+
+      const totalShares = gifterData[2];
+      const formattedTotalShares = ethers.formatEther(totalShares.toString());
+      const formatTotalShares = formattedTotalShares.slice(
+        0,
+        formattedTotalShares.indexOf(".") + 3
+      );
+      settotalShares(formatTotalShares);
     }
   }, [gifterData]);
 
   useEffect(() => {
+    console.log("Yield Data:", yieldData);
     if (yieldData) {
-      const formattedYield = parseFloat(
-        ethers.formatEther(yieldData.toString())
-      ).toFixed(2);
-      console.log("Yield Earned:", formattedYield);
+      const formattedYield = parseFloat(ethers.formatEther(yieldData.toString())).toFixed(2);
+      console.log("Yield Earned Formatted:", formattedYield);
       setYieldEarned(formattedYield);
     }
   }, [yieldData]);
+  
 
   useEffect(() => {
-    if (creatorsData && Array.isArray(creatorsData) && creatorsData.length > 1) {
+    if (
+      creatorsData &&
+      Array.isArray(creatorsData) &&
+      creatorsData.length > 1
+    ) {
       try {
         const totalDonation = BigInt(creatorsData[0] || 0);
         const claimableAmount = BigInt(creatorsData[1] || 0);
-        const formatClaimableShares = parseFloat(
-          ethers.formatEther(claimableAmount.toString())
-        ).toFixed(2);
-        setClaimableShares(formatClaimableShares);
-        
-        const unclaimed = totalDonation;
-        console.log("Unclaimed Donation:", unclaimed.toString());
+
+        // Store raw value for contract calls
+        setClaimableSharesRaw(claimableAmount);
+
+        // Store formatted value for display with slicing
+        const formattedClaimableShares = ethers.formatEther(claimableAmount);
+        setClaimableSharesFormatted(
+          formattedClaimableShares.slice(
+            0,
+            formattedClaimableShares.indexOf(".") + 3
+          )
+        );
+        console.log("Claimable Shares Formatted:", claimableSharesFormatted);
+
         const formattedUnclaimed = parseFloat(
-          ethers.formatEther(unclaimed.toString())
+          ethers.formatEther(totalDonation.toString())
         ).toFixed(2);
         setDonateUnclaimed(formattedUnclaimed);
       } catch (error) {
@@ -110,19 +135,19 @@ const Profile: React.FC = () => {
     }
   }, [isWithdrawSuccess, isWithdrawError, withdrawError]);
 
-  const handleWithdraw = async () => {
-    if (!address || isWithdrawing || parseFloat(claimableShares) <= 0) return;
+  const handleWithdrawCreator = async () => {
+    if (!address || isWithdrawing || claimableSharesRaw <= BigInt(0)) return;
 
     try {
       setIsWithdrawing(true);
-      const claimableSharesInWei = ethers.parseEther(claimableShares);
-      console.log("Claimable Shares in Wei:", claimableSharesInWei.toString());
-      
+      console.log("Initiating withdrawal...");
+      console.log("Claimable Shares Raw:", claimableSharesRaw);
+
       await withdraw({
         abi: GiftifyABI,
         address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
         functionName: "initiateWithdraw",
-        args: [claimableSharesInWei],
+        args: [claimableSharesRaw], // Use the raw value for the smart contract call
       });
     } catch (error) {
       console.error("Withdrawal Error:", error);
@@ -146,7 +171,7 @@ const Profile: React.FC = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
           <h2 className="text-lg font-bold text-gray-300 mb-2">
-            Total Donated
+            Total Gifter Donated
           </h2>
           <p className="text-2xl font-extrabold flex items-center space-x-2">
             <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
@@ -170,46 +195,40 @@ const Profile: React.FC = () => {
             <span className="mt-3 text-md font-light bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400">
               Claimable amount :{" "}
               <span className="flex items-center gap-2 ">
-                {" "}
-                <Image
-                  src={sUSDeLogo}
-                  alt="sUSDe"
-                  width={24}
-                  height={24}
-                  className="mt-2"
-                />
+                <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
                 <span className="space-x-2 mt-2">
-                  {claimableShares} <span className="font-bold">USDe</span>
+                  {claimableSharesFormatted}{" "}
+                  <span className="font-bold">USDe</span>
                 </span>
               </span>
             </span>
           </div>
-          <button
-            onClick={handleWithdraw}
-            disabled={isWithdrawing || parseFloat(claimableShares) <= 0}
-            className={`cursor-pointer text-center mt-[3rem] px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 
+          <div className="mt-[3rem] flex items-center space-x-5 justify-center">
+            <button
+              onClick={handleWithdrawCreator}
+              className={`cursor-pointer text-center px-2 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 
               ${
-                isWithdrawing || parseFloat(claimableShares) <= 0
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:from-blue-500 hover:to-teal-400'
+                isWithdrawing || claimableSharesRaw <= BigInt(0)
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:from-blue-500 hover:to-teal-400"
               } 
               text-white font-medium transition-all shadow-lg hover:shadow-xl w-full`}
-          >
-            {isWithdrawing 
-              ? "Withdrawing..." 
-              : parseFloat(claimableShares) <= 0 
-                ? "No Claimable Amount" 
-                : "Withdraw Donation"
-            }
-          </button>
+            >
+              {isWithdrawing
+                ? "Withdrawing..."
+                : claimableSharesRaw <= BigInt(0)
+                ? "No Claimable Amount"
+                : "Withdraw Donation"}
+            </button>
+          </div>
         </div>
 
-        <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
+        <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md ">
           <h2 className="text-lg font-bold text-gray-300 mb-2">Yield Earned</h2>
           <div className="flex items-center justify-center space-x-2 mr-[12rem]">
             <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
-            <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-green-400">
-              {isYieldLoading ? "Loading..." : `${yieldEarned} USDe`}
+            <p className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-green-400">
+              {isYieldLoading ? "Loading..." : `${yieldEarned} sUSDe`}
             </p>
           </div>
           <div className="text-center mt-[7.7rem]">
