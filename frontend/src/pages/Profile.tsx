@@ -35,12 +35,13 @@ const Profile: React.FC = () => {
     args: [address],
   });
 
-  const { data: yieldData, isLoading: isYieldLoading } = useReadContract({
+  const { data: getYieldData, isLoading: isYieldLoading } = useReadContract({
     abi: GiftifyABI,
     address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
     functionName: "getYield",
     args: [address],
   });
+  console.log("Full getYieldData Object:", JSON.stringify(getYieldData));
 
   const { data: creatorsData, isLoading: isCreatorsLoading } = useReadContract({
     abi: GiftifyABI,
@@ -51,7 +52,7 @@ const Profile: React.FC = () => {
 
   console.log("Creators Data:", creatorsData);
   console.log("Gifter Data:", gifterData);
-  console.log("Yield Data:", yieldData);
+  console.log("Yield Data:", getYieldData);
 
   const {
     data: withdrawHash,
@@ -82,13 +83,14 @@ const Profile: React.FC = () => {
   }, [gifterData]);
 
   useEffect(() => {
-    console.log("Yield Data:", yieldData);
-    if (yieldData) {
-      const formattedYield = parseFloat(ethers.formatEther(yieldData.toString())).toFixed(2);
-      console.log("Yield Earned Formatted:", formattedYield);
-      setYieldEarned(formattedYield);
+    console.log("Yield Data:", getYieldData);
+    if (getYieldData) {
+      const formattedYield = ethers.formatEther(getYieldData.toString());
+      const formatYield = formattedYield.slice(0, formattedYield.indexOf(".") + 3);
+      console.log("Yield Earned Formatted:", formatYield);
+      setYieldEarned(formatYield);
     }
-  }, [yieldData]);
+  }, [getYieldData]);
   
 
   useEffect(() => {
