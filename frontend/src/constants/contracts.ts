@@ -4,7 +4,7 @@ import { sUSDe } from "../utils/abi/sUSDe";
 
 export const contracts = {
     GIFTIFY: {
-        contract: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5",
+        contract: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
         abi: GiftifyABI
     },
     USDE: {

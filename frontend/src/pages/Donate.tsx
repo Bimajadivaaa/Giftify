@@ -66,7 +66,7 @@ const Donation: React.FC = () => {
         abi: USDE,
         address: "0x7D6AF0F5F5A00685dB264ee5506eDEbf1CcaeBac", // USDE contract
         functionName: "approve",
-        args: ["0x5b5e57e208074Bb5397F26067C147276bD5b82D5", weiAmount],
+        args: ["0x50458e85B625CF27E3E96D71AeEF8808262bDc9d", weiAmount],
       });
     } catch (error) {
       toast.error("Approval failed!");
@@ -111,7 +111,7 @@ const Donation: React.FC = () => {
       const weiAmount = ethers.parseEther(donationAmount.toString());
       await donate({
         abi: GiftifyABI,
-        address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5", // Giftify contract
+        address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d", // Giftify contract
         functionName: "donate",
         args: [weiAmount, selectedCreator.walletAddress],
       });

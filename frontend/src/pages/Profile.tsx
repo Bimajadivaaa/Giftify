@@ -5,8 +5,12 @@ import Navbar from "../components/Navbar";
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import { useAccount } from "wagmi";
-import { useReadContract } from "wagmi";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+  useReadContract,
+} from "wagmi";
 import { GiftifyABI } from "../utils/abi/Giftify";
 import sUSDeLogo from "../public/Images/usde.svg";
 import { ethers } from "ethers";
@@ -16,35 +20,48 @@ const Profile: React.FC = () => {
   const [donatedAmount, setDonatedAmount] = useState<string>("0");
   const [donateUnclaimed, setDonateUnclaimed] = useState<string>("0");
   const [yieldEarned, setYieldEarned] = useState<string>("0");
-  const [claimableShares, setcClaimableShares] = useState<string>("0");
+  const [claimableShares, setClaimableShares] = useState<string>("0");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  console.log("Address: ", address);
 
   const { data: gifterData, isLoading: isGifterDataLoading } = useReadContract({
     abi: GiftifyABI,
-    address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5",
+    address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
     functionName: "gifters",
     args: [address],
   });
 
+  console.log("Gifter Data:", gifterData);
   const { data: yieldData, isLoading: isYieldLoading } = useReadContract({
     abi: GiftifyABI,
-    address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5",
+    address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
     functionName: "getYield",
     args: [address],
   });
 
   const { data: creatorsData, isLoading: isCreatorsLoading } = useReadContract({
     abi: GiftifyABI,
-    address: "0x5b5e57e208074Bb5397F26067C147276bD5b82D5",
+    address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
     functionName: "creators",
     args: [address],
   });
 
+  const {
+    data: withdrawHash,
+    isPending,
+    writeContract: withdraw,
+    error: withdrawError,
+  } = useWriteContract();
+
+  const { isSuccess: isWithdrawSuccess, isError: isWithdrawError } =
+    useWaitForTransactionReceipt({
+      hash: withdrawHash,
+    });
+
   useEffect(() => {
     if (gifterData && Array.isArray(gifterData) && gifterData.length > 1) {
       const rawDonatedAmount = gifterData[1];
-      console.log("Raw Donated Amount: ", rawDonatedAmount);
+      console.log("Donated Amount:", rawDonatedAmount.toString());
       const formattedAmount = ethers.formatEther(rawDonatedAmount.toString());
       setDonatedAmount(formattedAmount);
     }
@@ -55,25 +72,23 @@ const Profile: React.FC = () => {
       const formattedYield = parseFloat(
         ethers.formatEther(yieldData.toString())
       ).toFixed(2);
+      console.log("Yield Earned:", formattedYield);
       setYieldEarned(formattedYield);
     }
   }, [yieldData]);
 
   useEffect(() => {
-    if (
-      creatorsData &&
-      Array.isArray(creatorsData) &&
-      creatorsData.length > 1
-    ) {
+    if (creatorsData && Array.isArray(creatorsData) && creatorsData.length > 1) {
       try {
-        const totalDonation = BigInt(creatorsData[0] || 0); // Mengambil totalDonation dari indeks 0
-        const claimableShares = BigInt(creatorsData[1] || 0); // Mengambil claimableShares dari indeks 1
+        const totalDonation = BigInt(creatorsData[0] || 0);
+        const claimableAmount = BigInt(creatorsData[1] || 0);
         const formatClaimableShares = parseFloat(
-          ethers.formatEther(claimableShares.toString())
+          ethers.formatEther(claimableAmount.toString())
         ).toFixed(2);
-        setcClaimableShares(formatClaimableShares.toString());
-        console.log("claimableShares: ", claimableShares);
-        const unclaimed = totalDonation; // Menghitung yang belum diklaim
+        setClaimableShares(formatClaimableShares);
+        
+        const unclaimed = totalDonation;
+        console.log("Unclaimed Donation:", unclaimed.toString());
         const formattedUnclaimed = parseFloat(
           ethers.formatEther(unclaimed.toString())
         ).toFixed(2);
@@ -84,9 +99,36 @@ const Profile: React.FC = () => {
     }
   }, [creatorsData]);
 
-  console.log("Gifter Data: ", gifterData);
-  console.log("Yield Data: ", yieldData);
-  console.log("Creators Data: ", creatorsData);
+  useEffect(() => {
+    if (isWithdrawSuccess) {
+      setIsWithdrawing(false);
+      console.log("Withdrawal successful!");
+    }
+    if (isWithdrawError || withdrawError) {
+      setIsWithdrawing(false);
+      console.error("Withdrawal failed:", withdrawError);
+    }
+  }, [isWithdrawSuccess, isWithdrawError, withdrawError]);
+
+  const handleWithdraw = async () => {
+    if (!address || isWithdrawing || parseFloat(claimableShares) <= 0) return;
+
+    try {
+      setIsWithdrawing(true);
+      const claimableSharesInWei = ethers.parseEther(claimableShares);
+      console.log("Claimable Shares in Wei:", claimableSharesInWei.toString());
+      
+      await withdraw({
+        abi: GiftifyABI,
+        address: "0x50458e85B625CF27E3E96D71AeEF8808262bDc9d",
+        functionName: "initiateWithdraw",
+        args: [claimableSharesInWei],
+      });
+    } catch (error) {
+      console.error("Withdrawal Error:", error);
+      setIsWithdrawing(false);
+    }
+  };
 
   return (
     <main className="bg-gradient-to-b from-black via-gray-900 to-black text-white min-h-screen px-8 py-12">
@@ -136,21 +178,36 @@ const Profile: React.FC = () => {
                   height={24}
                   className="mt-2"
                 />
-                <span className="space-x-2 mt-2">{claimableShares} <span className="font-bold">USDe</span></span>
+                <span className="space-x-2 mt-2">
+                  {claimableShares} <span className="font-bold">USDe</span>
+                </span>
               </span>
             </span>
           </div>
-          <p className="cursor-pointer text-center mt-[3rem] px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 hover:from-blue-500 hover:to-teal-400 text-white font-medium transition-all shadow-lg hover:shadow-xl">
-            Withdraw Donation
-          </p>
+          <button
+            onClick={handleWithdraw}
+            disabled={isWithdrawing || parseFloat(claimableShares) <= 0}
+            className={`cursor-pointer text-center mt-[3rem] px-4 py-2 rounded-lg bg-gradient-to-r from-teal-400 to-blue-500 
+              ${
+                isWithdrawing || parseFloat(claimableShares) <= 0
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:from-blue-500 hover:to-teal-400'
+              } 
+              text-white font-medium transition-all shadow-lg hover:shadow-xl w-full`}
+          >
+            {isWithdrawing 
+              ? "Withdrawing..." 
+              : parseFloat(claimableShares) <= 0 
+                ? "No Claimable Amount" 
+                : "Withdraw Donation"
+            }
+          </button>
         </div>
 
         <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6 shadow-md">
           <h2 className="text-lg font-bold text-gray-300 mb-2">Yield Earned</h2>
-          <div className="flex items-center justify-center space-x-2 mr-[8.4rem]">
-            {/* Logo sUSDe */}
+          <div className="flex items-center justify-center space-x-2 mr-[12rem]">
             <Image src={sUSDeLogo} alt="sUSDe" width={24} height={24} />
-            {/* Yield Amount */}
             <p className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-green-400">
               {isYieldLoading ? "Loading..." : `${yieldEarned} USDe`}
             </p>
